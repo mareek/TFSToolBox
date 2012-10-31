@@ -35,6 +35,8 @@ namespace TFSToolBox
         private BranchObject[] allBranches;
         private Dictionary<TeamProject, WorkingFolder> folderByProject;
 
+        private string userName;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -74,6 +76,8 @@ namespace TFSToolBox
             tfsCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(RegisteredTfsConnections.GetProjectCollections().Single());
             versionControlServer = tfsCollection.GetService<VersionControlServer>();
 
+            userName = tfsCollection.AuthorizedIdentity.UniqueName;
+
             workspace = versionControlServer.QueryWorkspaces(null, null, System.Environment.MachineName).Single();
             workingFolders = workspace.Folders.Where(f => !f.IsCloaked).ToList();
 
@@ -82,8 +86,11 @@ namespace TFSToolBox
             foreach (var folder in workingFolders)
             {
                 var project = workspace.GetTeamProjectForLocalPath(folder.LocalItem);
-                tfsProjects.Add(project);
-                folderByProject.Add(project, folder);
+                if (!folderByProject.ContainsKey(project))
+                {
+                    tfsProjects.Add(project);
+                    folderByProject.Add(project, folder);
+                }
             }
 
             ProjectsCombo.ItemsSource = tfsProjects;
@@ -111,20 +118,20 @@ namespace TFSToolBox
         {
             if (e.Key == Key.Return)
             {
-                SearchComments(CommentSearchTextBox.Text, WindowsIdentity.GetCurrent().Name);
+                SearchComments(CommentSearchTextBox.Text, userName);
             }
         }
 
         private void CommentSearchButton_Click(object sender, RoutedEventArgs e)
         {
-            SearchComments(CommentSearchTextBox.Text, WindowsIdentity.GetCurrent().Name);
+            SearchComments(CommentSearchTextBox.Text, userName);
         }
 
         private void ViewBranchHistoryButton_Click(object sender, RoutedEventArgs e)
         {
             if (CurrentServerFolder != null)
             {
-                var history = GetFullHistoryOfServerFolder(CurrentServerFolder, WindowsIdentity.GetCurrent().Name);
+                var history = GetFullHistoryOfServerFolder(CurrentServerFolder, userName);
 
                 FillGrid(history);
             }
@@ -143,7 +150,7 @@ namespace TFSToolBox
             if (fileDialog.ShowDialog(this) ?? false)
             {
                 var serverFilePath = GetServerPathOfFile(fileDialog.FileName);
-                var history = GetFileHistory(serverFilePath, WindowsIdentity.GetCurrent().Name);
+                var history = GetFileHistory(serverFilePath, userName);
 
                 var fileChanges = (from changeset in history
                                    from change in changeset.Changes
@@ -213,6 +220,30 @@ namespace TFSToolBox
                 result = result.Next;
             }
         }
+
+        private void WriteDiffsToFile(Item file, VersionSpec sourceVersion, VersionSpec targetVersion, FileInfo outputFile)
+        {
+            var sourceItem = Difference.CreateTargetDiffItem(versionControlServer, file.ServerItem, VersionSpec.Latest, 0, sourceVersion);
+            var targetItem = Difference.CreateTargetDiffItem(versionControlServer, file.ServerItem, VersionSpec.Latest, 0, targetVersion);
+
+            using (var outputStream = outputFile.CreateText())
+            {
+                WriteDiffsToStream(file, sourceItem, targetItem, outputStream);
+            }
+        }
+        private void WriteDiffsToStream(Item file, IDiffItem sourceItem, IDiffItem targetItem, StreamWriter outputStream)
+        {
+            var diffOptions = new DiffOptions
+            {
+                SourceEncoding = Encoding.GetEncoding(file.Encoding),
+                TargetEncoding = Encoding.GetEncoding(file.Encoding),
+                OutputType = DiffOutputType.Unified,
+                StreamWriter = outputStream,
+            };
+
+            Difference.DiffFiles(this.versionControlServer, sourceItem, targetItem, diffOptions, "AllYourBaseAreBelongToUs", true);
+        }
+
 
         private List<Changeset> GetFileHistory(string serverFilePath, string userName = null)
         {
