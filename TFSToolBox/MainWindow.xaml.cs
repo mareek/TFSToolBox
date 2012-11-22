@@ -73,6 +73,21 @@ namespace TFSToolBox
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            const string diffText =
+@"@@ -73,7 +73,7 @@ public static int BCDToInteger(this byte[] value, bool msb)
+ 
+         public static bool IsMyKindOfEnum(this System.Linq.ParallelMergeOptions truc)
+         {
+-            switch(truc)
++            switch (truc)
+             {
+                 case ParallelMergeOptions.AutoBuffered:
+                 case ParallelMergeOptions.FullyBuffered:";
+            MyDiffControl.SetDiffText(diffText);
+        }
+
+        private void InitTfsWorkspace()
+        {
             tfsCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(RegisteredTfsConnections.GetProjectCollections().Single());
             versionControlServer = tfsCollection.GetService<VersionControlServer>();
 
@@ -97,7 +112,7 @@ namespace TFSToolBox
             allBranches = versionControlServer.QueryRootBranchObjects(RecursionType.Full);
         }
 
-        private void initBuild()
+        private void InitBuild()
         {
             buildServer = tfsCollection.GetService<IBuildServer>();
             var allBuilds = buildServer.QueryBuildDefinitions("*");
