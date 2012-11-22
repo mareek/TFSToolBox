@@ -51,29 +51,6 @@
             <Button x:Name="ViewBranchHistoryButton" Margin="3" Click="ViewBranchHistoryButton_Click">View branch history</Button>
         </WrapPanel>
         <local:DiffControl x:Name="MyDiffControl"/>
-
-        <!--<FlowDocumentScrollViewer>
-            <FlowDocument PageWidth="2048" FontFamily="Consolas">
-                <Paragraph>
-                    <Run Background="LightSlateGray">@@ -73,7 +73,7 @@ public static int BCDToInteger(this byte[] value, bool msb)</Run>
-                    <LineBreak />
-                    public static bool IsMyKindOfEnum(this System.Linq.ParallelMergeOptions truc)
-                    <LineBreak />
-                    {
-                    <LineBreak />
-                    <Run Background="Red">-            switch(truc)</Run>
-                    <LineBreak />
-                    <Run Background="LightGreen">+            switch(truc)</Run>
-                    <LineBreak />
-                    {
-                    <LineBreak />
-                    case ParallelMergeOptions.AutoBuffered:
-                    <LineBreak />
-                    case ParallelMergeOptions.FullyBuffered:
-                    <LineBreak />
-                </Paragraph>
-            </FlowDocument>
-        </FlowDocumentScrollViewer>-->
         <DataGrid x:Name="ResultGrid" Visibility="Collapsed" Margin="0 3 0 0"/>
     </DockPanel>
 </Window>
